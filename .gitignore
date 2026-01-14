@@ -1,5 +1,5 @@
 # Claude Code temporary files
-tmpclaude-*-cwd
+temp/
 
 # Node modules
 node_modules/
