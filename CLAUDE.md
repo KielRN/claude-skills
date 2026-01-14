@@ -189,7 +189,9 @@ If an iteration fails (tests fail, errors occur), the next iteration learns from
 ## File Management
 
 ### Temporary Files
-Ralph may generate temporary files during execution. Use the cleanup script to organize them:
+The Claude CLI creates temporary files (like `tmpclaude-*-cwd`) during execution. Ralph automatically moves these to the `temp/` folder after each iteration, keeping your workspace clean.
+
+If you need to manually clean up temp files between runs:
 
 ```powershell
 # Windows

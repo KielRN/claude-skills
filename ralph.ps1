@@ -73,6 +73,13 @@ After completing your task, check PRD.md:
         Write-Warning "claude exited with code $LASTEXITCODE (continuing to next iteration)"
     }
 
+    # Cleanup temp files after each iteration
+    if (Test-Path "temp") {
+        Get-ChildItem -Path . -Filter "tmpclaude-*-cwd" -File -ErrorAction SilentlyContinue | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination "temp\" -Force -ErrorAction SilentlyContinue
+        }
+    }
+
     if ($result -match "<promise>COMPLETE</promise>") {
         Write-Host "==========================================="
         Write-Host "  All tasks complete after $i iterations!"

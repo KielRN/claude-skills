@@ -62,6 +62,11 @@ After completing your task, check PRD.md:
     echo "$result"
     echo ""
 
+    # Cleanup temp files after each iteration
+    if [ -d "temp" ]; then
+        find . -maxdepth 1 -type f -name "tmpclaude-*-cwd" -exec mv {} temp/ \; 2>/dev/null || true
+    fi
+
     if [[ "$result" == *"<promise>COMPLETE</promise>"* ]]; then
         echo "==========================================="
         echo "  All tasks complete after $i iterations!"
