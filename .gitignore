@@ -1,0 +1,9 @@
+# Claude Code temporary files
+tmpclaude-*-cwd
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env.local
