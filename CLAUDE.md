@@ -4,14 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is the **Ralph** system - an autonomous AI coding agent that implements features iteratively by breaking down Product Requirements Documents (PRDs) into small, atomic tasks.
+**Ralph** is an autonomous AI coding agent that implements features iteratively by breaking down Product Requirements Documents (PRDs) into small, atomic tasks. Each task is completed in a fresh Claude instance with no memory of previous iterations, ensuring consistency and preventing context drift.
 
 ### Core Components
 
-- **ralph.ps1** / **ralph.sh**: Loop scripts that spawn fresh Claude instances per iteration
-- **SKILL.md**: PRD Generator skill definition for creating well-structured requirements
-- **PRD.md**: Generated requirements document with user stories (created per project)
-- **progress.txt**: Iteration log capturing learnings and patterns (created per project)
+- **[ralph.ps1](ralph.ps1)** / **[ralph.sh](ralph.sh)**: Loop scripts that spawn fresh Claude instances per iteration
+- **[SKILL.md](SKILL.md)**: PRD Generator skill definition for creating well-structured requirements
+- **[AGENTS.md](AGENTS.md)**: Reusable patterns and learnings discovered during implementation (cross-project knowledge)
+- **PRD.md**: Generated requirements document with user stories (created per project in working directory)
+- **progress.txt**: Iteration log capturing learnings and patterns (created per project in working directory)
+- **[cleanup.ps1](cleanup.ps1)**: Utility script to organize temporary files into temp folder
 
 ## How Ralph Works
 
@@ -32,6 +34,11 @@ Since Ralph spawns fresh instances per iteration with no memory, stories that ar
 
 ## Running Ralph
 
+### Prerequisites
+- Claude Code CLI installed and configured (`claude` command available)
+- PRD.md file in your working directory
+- progress.txt file in your working directory (created automatically by `/prd` skill)
+
 ### PowerShell (Windows)
 ```powershell
 .\ralph.ps1 -MaxIterations 10 -SleepSeconds 2
@@ -39,15 +46,24 @@ Since Ralph spawns fresh instances per iteration with no memory, stories that ar
 
 ### Bash (Unix/Linux/Mac)
 ```bash
+# Make script executable (first time only)
+chmod +x ralph.sh
+
+# Run Ralph
 ./ralph.sh [max_iterations] [sleep_seconds]
-# Example: ./ralph.sh 15 3
+
+# Example: Run up to 15 iterations with 3 second delay
+./ralph.sh 15 3
 ```
 
 **Parameters:**
-- `MaxIterations`: Maximum number of iterations to run (default: 10)
-- `SleepSeconds`: Delay between iterations (default: 2)
+- `MaxIterations` / `max_iterations`: Maximum number of iterations to run (default: 10)
+- `SleepSeconds` / `sleep_seconds`: Delay between iterations in seconds (default: 2)
 
-The loop exits early when all tasks show `<promise>COMPLETE</promise>`.
+**Exit Conditions:**
+- Ralph exits successfully when all tasks are marked complete (outputs `<promise>COMPLETE</promise>`)
+- Ralph exits with error code 1 if max iterations reached with incomplete tasks
+- Each iteration runs with `--dangerously-skip-permissions` flag to enable autonomous operation
 
 ## PRD Structure & Requirements
 
@@ -169,3 +185,53 @@ Use progress.txt Learnings section to pass patterns and gotchas to future iterat
 
 ### Failure Recovery
 If an iteration fails (tests fail, errors occur), the next iteration learns from progress.txt and attempts a fix. This is by design - Ralph is resilient through iteration.
+
+## File Management
+
+### Temporary Files
+Ralph may generate temporary files during execution. Use the cleanup script to organize them:
+
+```powershell
+# Windows
+.\cleanup.ps1
+
+# Unix/Linux/Mac
+# Create bash version if needed or manually move files to temp/
+```
+
+### .gitignore
+The project includes a [.gitignore](.gitignore) that excludes:
+- temp/ directory (temporary Claude files)
+- node_modules/ (if using Node.js in your project)
+- .env files (environment variables and secrets)
+
+## Workflow Summary
+
+1. **Plan**: Use `/prd` skill or manually create PRD.md with user stories
+2. **Execute**: Run ralph.ps1 or ralph.sh to start autonomous implementation
+3. **Monitor**: Watch progress in console output and check progress.txt for detailed logs
+4. **Iterate**: Ralph continues until all tasks complete or max iterations reached
+5. **Review**: Check git commits for each completed task
+6. **Learn**: Review AGENTS.md for patterns that can help future projects
+
+## Best Practices
+
+### For Effective PRDs
+- Break features into the smallest possible user stories
+- Order stories by dependency (database → backend → frontend)
+- Write verifiable acceptance criteria (avoid "works well" type criteria)
+- Always include "Typecheck passes" as a criterion
+- For UI changes, include "Verify changes work in browser"
+
+### For Smooth Execution
+- Start with fewer iterations (5-10) to test your PRD structure
+- Review progress.txt after a few iterations to catch issues early
+- If Ralph gets stuck on a task, it may be too large - split it in PRD.md
+- Document learnings in progress.txt for cross-iteration knowledge transfer
+- Add reusable patterns to AGENTS.md for cross-project knowledge
+
+### Troubleshooting
+- **Task never completes**: Story may be too large, split into smaller tasks
+- **Tests keep failing**: Check progress.txt for error patterns, may need manual intervention
+- **Ralph makes wrong assumptions**: Improve acceptance criteria clarity in PRD.md
+- **Context window exceeded**: Story is too complex, break into multiple atomic stories
